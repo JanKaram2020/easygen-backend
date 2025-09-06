@@ -1,7 +1,9 @@
 import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
   @IsEmail()
+  @ApiProperty()
   email: string;
 
   @IsString()
@@ -11,5 +13,6 @@ export class LoginDto {
   @Matches(/(?=.*[^A-Za-z0-9])/, {
     message: 'must contain a special character',
   })
+  @ApiProperty()
   password: string;
 }

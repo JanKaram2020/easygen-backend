@@ -12,6 +12,7 @@ import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt.guard';
 import type { Request, Response } from 'express';
+import { ApiCookieAuth, ApiHeader } from '@nestjs/swagger';
 
 interface RequestWithCookies extends Request {
   cookies: {
@@ -33,6 +34,11 @@ export class AuthController {
     return this.authService.login(dto.email, dto.password, res);
   }
 
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer token',
+  })
+  @ApiCookieAuth('refreshTokenCookie')
   @UseGuards(JwtAuthGuard)
   @Post('refresh')
   refresh(
@@ -45,6 +51,11 @@ export class AuthController {
     return this.authService.refreshToken(req.user.email, refreshToken, res);
   }
 
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer token',
+  })
+  @ApiCookieAuth('refreshTokenCookie')
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   logout(
