@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { MongooseModule } from '@nestjs/mongoose';
+
+const connectionString = process.env.DB_CONNECTION ?? '';
 
 @Module({
-  imports: [],
+  imports: [MongooseModule.forRoot(connectionString)],
   controllers: [AppController],
   providers: [AppService],
 })
