@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   Req,
   Res,
@@ -63,5 +64,17 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.authService.logout(req.user.email, res);
+  }
+
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer token',
+  })
+  @ApiCookieAuth('refreshTokenCookie')
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  me(@Req() req: { user: { email: string; name: string } }) {
+    const { email, name } = req.user;
+    return { email, name };
   }
 }
