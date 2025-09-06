@@ -40,4 +40,10 @@ export class UsersService {
     );
     return res;
   }
+
+  async update(email: string, updateData: Partial<User>) {
+    return this.userModel.findOneAndUpdate({ email }, updateData, {
+      new: true,
+    });
+  }
 }
