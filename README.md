@@ -19,7 +19,7 @@ FRONTEND_URL=http://localhost:3000
 ```
 joi validates that env variables are set correctly at startup
 
-### 2. Start the development server:
+### 2. Install the dependencies
 ```bash
 $ yarn install
 ```
