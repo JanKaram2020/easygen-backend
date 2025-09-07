@@ -32,13 +32,13 @@ $ yarn start
 Swagger [http://localhost:3002/api/](http://localhost:3002/api/)
 
 ## Auth Routes
-| Method | Endpoint   | Description                           | Auth Required |
-| ------ | ---------- | ------------------------------------- | ------------- |
-| POST   | `/signup`  | Register a new user                   | ❌             |
-| POST   | `/login`   | Login with email + password           | ❌             |
-| POST   | `/refresh` | Get a new access token (refresh flow) | ❌             |
-| POST   | `/logout`  | Invalidate refresh token / logout     | ✅             |
-| GET    | `/me`      | Get current user profile              | ✅             |
+| Method | Endpoint                                              | Description                           | Auth Required |
+| ------ |-------------------------------------------------------| ------------------------------------- | ------------- |
+| POST   | [`/auth/signup`](http://localhost:3002/auth/signup)   | Register a new user                   | ❌             |
+| POST   | [`/auth/login`](http://localhost:3002/auth/login)     | Login with email + password           | ❌             |
+| POST   | [`/auth/refresh`](http://localhost:3002/auth/refresh) | Get a new access token (refresh flow) | ❌             |
+| POST   | [`/auth/logout`](http://localhost:3002/auth/logout)   | Invalidate refresh token / logout     | ✅             |
+| GET    | [`/auth/me`](http://localhost:3002/auth/me)           | Get current user profile              | ✅             |
 
 ## Tech Stack
 1. `NestJS`
@@ -54,3 +54,47 @@ Swagger [http://localhost:3002/api/](http://localhost:3002/api/)
 11. `joi`
 12. `@nestjs/swagger`
 13. `ESLint + Prettier`
+
+## Authentication Flow
+
+This project uses **JWT (JSON Web Tokens)** for authentication with **access tokens** and **refresh tokens**.
+
+### Access Token
+- Short-lived (e.g. maximum 1 day)
+- Stored in `localStorage` or in `memory`
+- Returned to the frontend after login/signup.
+- Expected in the Authorization: Bearer <token> header for every authenticated API request.
+
+### Refresh Token
+- Long-lived (e.g., 7 days).
+- Sent from the backend as a Secure `cookie`
+- Used only to request a new access token when the old one expires.
+
+### Flow
+
+1. **Login / Signup**
+    - User submits credentials to `/auth/login` or `/auth/signup`.
+    - Backend responds with:
+        - `accessToken` → to be stored by the frontend (e.g., localStorage or memory).
+        - `refreshToken` → sent as a secure cookie.
+
+2. **Authenticated Requests**
+    - For protected routes, the frontend must send:
+      ```
+      Authorization: Bearer <accessToken>
+      ``` 
+      Backend verifies the token before granting access.
+
+3. **Token Expiration**
+    - When the access token expires, the backend responds with `401 Unauthorized`.
+
+4. **Token Refresh**
+    - The frontend calls `/auth/refresh`:
+    - The frontend sends the refresh token cookie automatically.
+    - Backend validates the refresh token, issues a new access token, and sets a new refresh token cookie.
+    - The old refresh token is invalidated.
+
+5. **Logout**
+    - Client requests `auth/logout`
+    - Backend clears the refresh token from `cookies`. 
+    - Frontend should clear the access token from storage.
