@@ -5,9 +5,14 @@ import cookieParser from 'cookie-parser';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    cors: {
+      origin: process.env.FRONTEND_URL,
+    },
+  });
   app.useGlobalPipes(new ValidationPipe());
   app.use(cookieParser());
+
   const config = new DocumentBuilder()
     .setTitle('EasyGen Backend')
     .setDescription('Minimal Auth backend')
@@ -20,6 +25,7 @@ async function bootstrap() {
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
+
   await app.listen(process.env.PORT ?? 3002);
 }
 bootstrap();
