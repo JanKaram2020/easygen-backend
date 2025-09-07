@@ -41,7 +41,7 @@ export class AuthService {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      path: '/auth/refresh',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }
@@ -52,6 +52,7 @@ export class AuthService {
       user.email,
       user.name,
     );
+    await this.updateRefreshToken(user.email, refreshToken);
     this.setRefreshTokenCookie(res, refreshToken);
     return { accessToken };
   }
@@ -75,12 +76,14 @@ export class AuthService {
     await this.usersService.update(email, { refreshToken: null });
   }
 
-  async refreshToken(
-    email: string,
-    existingRefreshToken: string,
-    res: Response,
-  ) {
-    const user = await this.usersService.findByEmail(email);
+  async refreshToken(existingRefreshToken: string, res: Response) {
+    const payload = await this.jwtService.verifyAsync<{
+      sub: string;
+      name: string;
+    }>(existingRefreshToken, { secret: process.env.JWT_REFRESH_SECRET });
+
+    const user = await this.usersService.findByEmail(payload.sub);
+
     if (!user || !user.refreshToken)
       throw new UnauthorizedException('Invalid credentials');
 

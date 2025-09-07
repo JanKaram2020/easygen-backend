@@ -35,21 +35,15 @@ export class AuthController {
     return this.authService.login(dto.email, dto.password, res);
   }
 
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'Bearer token',
-  })
   @ApiCookieAuth('refreshTokenCookie')
-  @UseGuards(JwtAuthGuard)
   @Post('refresh')
   refresh(
     @Req() req: RequestWithCookies,
     @Res({ passthrough: true }) res: Response,
   ) {
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) throw new UnauthorizedException();
-    if (!req.user || !req.user.email) throw new UnauthorizedException();
-    return this.authService.refreshToken(req.user.email, refreshToken, res);
+    if (!refreshToken) throw new UnauthorizedException('Missing refresh token');
+    return this.authService.refreshToken(refreshToken, res);
   }
 
   @ApiHeader({
