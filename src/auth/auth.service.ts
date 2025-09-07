@@ -3,12 +3,14 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { type Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   private async signTokens(email: string, name: string) {
@@ -16,15 +18,15 @@ export class AuthService {
       this.jwtService.signAsync(
         { sub: email, name },
         {
-          secret: process.env.JWT_SECRET,
-          expiresIn: process.env.JWT_EXPIRES_IN,
+          secret: this.configService.get<string>('JWT_SECRET'),
+          expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
         },
       ),
       this.jwtService.signAsync(
         { sub: email, name },
         {
-          secret: process.env.JWT_REFRESH_SECRET,
-          expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+          expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
         },
       ),
     ]);
@@ -39,7 +41,7 @@ export class AuthService {
   private setRefreshTokenCookie(res: Response, refreshToken: string) {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: this.configService.get<string>('NODE_ENV') === 'production',
       sameSite: 'strict',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -80,7 +82,9 @@ export class AuthService {
     const payload = await this.jwtService.verifyAsync<{
       sub: string;
       name: string;
-    }>(existingRefreshToken, { secret: process.env.JWT_REFRESH_SECRET });
+    }>(existingRefreshToken, {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+    });
 
     const user = await this.usersService.findByEmail(payload.sub);
 
