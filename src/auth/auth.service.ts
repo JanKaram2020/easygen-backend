@@ -48,9 +48,12 @@ export class AuthService {
 
   async signup(email: string, name: string, password: string, res: Response) {
     const user = await this.usersService.create(email, name, password);
-    const tokens = await this.signTokens(user.email, user.name);
-    this.setRefreshTokenCookie(res, tokens.refreshToken);
-    return tokens;
+    const { refreshToken, accessToken } = await this.signTokens(
+      user.email,
+      user.name,
+    );
+    this.setRefreshTokenCookie(res, refreshToken);
+    return { accessToken };
   }
 
   async login(email: string, password: string, res: Response) {
@@ -58,10 +61,13 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
-    const tokens = await this.signTokens(user.email, user.name);
-    await this.updateRefreshToken(email, tokens.refreshToken);
-    this.setRefreshTokenCookie(res, tokens.refreshToken);
-    return tokens;
+    const { refreshToken, accessToken } = await this.signTokens(
+      user.email,
+      user.name,
+    );
+    await this.updateRefreshToken(email, refreshToken);
+    this.setRefreshTokenCookie(res, refreshToken);
+    return { accessToken };
   }
 
   async logout(email: string, res: Response) {
@@ -69,21 +75,28 @@ export class AuthService {
     await this.usersService.update(email, { refreshToken: null });
   }
 
-  async refreshToken(email: string, refreshToken: string, res: Response) {
+  async refreshToken(
+    email: string,
+    existingRefreshToken: string,
+    res: Response,
+  ) {
     const user = await this.usersService.findByEmail(email);
     if (!user || !user.refreshToken)
       throw new UnauthorizedException('Invalid credentials');
 
     const isValidRefreshToken = await bcrypt.compare(
-      refreshToken,
+      existingRefreshToken,
       user.refreshToken,
     );
     if (!isValidRefreshToken)
       throw new UnauthorizedException('Invalid credentials');
 
-    const tokens = await this.signTokens(user.email, user.name);
-    await this.updateRefreshToken(user.email, tokens.refreshToken);
-    this.setRefreshTokenCookie(res, tokens.refreshToken);
-    return tokens;
+    const { accessToken, refreshToken } = await this.signTokens(
+      user.email,
+      user.name,
+    );
+    await this.updateRefreshToken(user.email, refreshToken);
+    this.setRefreshTokenCookie(res, refreshToken);
+    return { accessToken };
   }
 }
